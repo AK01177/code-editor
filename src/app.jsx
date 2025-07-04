@@ -3,7 +3,15 @@ import { Toaster } from 'react-hot-toast'
 import Editor from './components/Editor'
 import Output from './components/Output'
 import Toolbar from './components/toolbar'
-import { loadPyodide } from 'pyodide'
+// Remove the import line for pyodide
+
+// Add this function to load Pyodide from CDN
+async function loadPyodideFromCDN() {
+  if (!window.loadPyodide) {
+    await import('https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js');
+  }
+  return await window.loadPyodide();
+}
 
 function App() {
   const [code, setCode] = useState(`# Welcome to Python Code Editor
@@ -49,14 +57,15 @@ for key, value in person.items():
     const initPyodide = async () => {
       try {
         setStatus('loading')
-        const pyodideInstance = await loadPyodide({
-          stdout: (text) => {
-            setOutput(prev => prev + text)
-          },
-          stderr: (text) => {
-            setOutput(prev => prev + text)
-          }
-        })
+        // Replace: const pyodideInstance = await loadPyodide({...})
+        const pyodideInstance = await loadPyodideFromCDN();
+        // Set up stdout and stderr
+        pyodideInstance.setStdout({
+          batched: (text) => setOutput(prev => prev + text)
+        });
+        pyodideInstance.setStderr({
+          batched: (text) => setOutput(prev => prev + text)
+        });
         setPyodide(pyodideInstance)
         setStatus('ready')
       } catch (error) {
